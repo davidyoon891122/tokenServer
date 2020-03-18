@@ -4,6 +4,7 @@ package tools
 import (
     "fmt"
     "../headerStruct"
+    "../bodyStruct"
     "encoding/binary"
 )
 
@@ -12,15 +13,17 @@ import (
 var recvData []byte
 var header headerStruct.Header
 var index int
-//var body bodyStruct.Body
+var body bodyStruct.Body
 
 func Parse(data []byte) {
     fmt.Println("Parser is initializing..")
     recvData = data
 
 
-    //ParseHeader
+    //Parse Header
     parseHeader()
+    //Parse Body
+    parseBody()
 
 }
 
@@ -40,11 +43,12 @@ func parseHeader() {
 
 
 
-//func parseBody() {
-//    body.Token = readFixLenStr(135)
-//    body.UserID = readFixLenStr(15)
+func parseBody() {
+    body.Token = readFixLenStr(135)
+    body.UserID = readFixLenStr(15)
 
-//}
+    fmt.Println("Body : ", body)
+}
 
 
 func readInt() int {
@@ -71,7 +75,11 @@ func readByte() byte {
 }
 
 
-
+func readFixLenStr(length int) string{
+    ret := recvData[index:index+length]
+    index += length
+    return string(ret)
+}
 
 
 
