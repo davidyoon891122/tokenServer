@@ -71,6 +71,11 @@ func Handler(conn net.Conn) {
         logger.Printf("data from client : %v", string(data))
 
 	}
+
+    savedData := db.ReadData()
+
+    fmt.Println("saved data :", savedData)
+
     db.WriteData(parsedData) 
     defer fmt.Printf("client %s is disconnected...\n", client)
 }
