@@ -6,3 +6,6 @@ type Body struct {
     UserID string
 }
 
+
+var TokenSize int = 152
+var UserIDSize int = 15

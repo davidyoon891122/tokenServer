@@ -6,6 +6,7 @@ import (
     "../headerStruct"
     "../bodyStruct"
     "encoding/binary"
+    "strconv"
 )
 
 
@@ -15,7 +16,7 @@ var header headerStruct.Header
 var index int
 var body bodyStruct.Body
 
-func Parse(data []byte) {
+func Parse(data []byte) bodyStruct.Body {
     fmt.Println("Parser is initializing..")
     recvData = data
 
@@ -25,6 +26,10 @@ func Parse(data []byte) {
     //Parse Body
     parseBody()
 
+    printHeader()
+    //data Processing.
+
+    return body
 }
 
 
@@ -36,31 +41,42 @@ func parseHeader() {
     header.Window = readInt()
     header.Control = readByte()
     header.Flag = readByte()
-    header.Reserve = readInt()
+    header.Reserve = readShort()
     fmt.Println("Header : ", header)
+
+    service := getService()
+    fmt.Printf("Servcie number : %s\n", service)
 }
 
 
 
+func printHeader() {
+    fmt.Println("Length : ", header.Length)
+    fmt.Println("Process : ", header.Process)
+    fmt.Println("Service : ", header.Service)
+    fmt.Println("Window : ", header.Window)
+    fmt.Println("Control : ", header.Control)
+    fmt.Println("Flag : ", header.Flag)
+    fmt.Println("Reserve : ", header.Reserve)
+}
+
+
 
 func parseBody() {
-    body.Token = readFixLenStr(135)
-    body.UserID = readFixLenStr(15)
+    body.Token = readFixLenStr(bodyStruct.TokenSize)
+    body.UserID = readFixLenStr(bodyStruct.UserIDSize)
 
-    fmt.Println("Body : ", body)
 }
 
 
 func readInt() int {
     ret := binary.BigEndian.Uint32(recvData[index:])
-    fmt.Println("readInt")
     index += 4
     return int(ret)
 }
 
 
 func readShort() int16{
-    fmt.Println("readShort")
     ret := binary.BigEndian.Uint16(recvData[index:])
     index += 2
     return int16(ret)
@@ -68,7 +84,6 @@ func readShort() int16{
 
 
 func readByte() byte {
-    fmt.Println("readByte")
     ret := recvData[index:index+1]
     index += 1
     return ret[0]
@@ -82,4 +97,7 @@ func readFixLenStr(length int) string{
 }
 
 
-
+func getService() string {
+    service :=  strconv.Itoa(int(header.Process)) + strconv.Itoa(int(header.Service)) 
+    return service
+}

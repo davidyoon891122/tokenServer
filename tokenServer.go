@@ -1,21 +1,24 @@
 package main
 
 import (
-	"fmt"
+    "fmt"
 	"log"
 	"net"
 	"os"
+    "./tools"
+    "./db"
+    "./bodyStruct"
 )
 
-
+//Global Variables
 var IP string = "172.17.0.2"
 var PORT string = ":13302"
 var logger *log.Logger
-var currentDirectory string
-var logPath string = "/logs/server.log"
-
+var programName string = "Server"
 
 func setLogger() {
+    currentDirectory, _ := os.Getwd()
+    logPath := "/logs/" + programName + ".log"
 	f, err := os.OpenFile(currentDirectory + logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
         panic(err)
@@ -27,9 +30,6 @@ func setLogger() {
 
 
 func main() {
-	currentDirectory, _ = os.Getwd()
-
-
 	setLogger()
 	ln, err := net.Listen("tcp", IP + PORT)
 	defer ln.Close()
@@ -46,19 +46,19 @@ func main() {
 			continue
 		}
 
-		Handler(conn)
+		go Handler(conn)
 	}
 }
 
 
 func Handler(conn net.Conn) {
 	var recvBuf []byte
+    var parsedData bodyStruct.Body
 	client := conn.RemoteAddr().String()
 
 	logger.Printf("client %s is connected...", client)
 
 	recvBuf = make([]byte, 4096)
-
 	n, err := conn.Read(recvBuf)
 
 	if err != nil {
@@ -67,9 +67,12 @@ func Handler(conn net.Conn) {
 
 	if n > 0 {
 		data := recvBuf[:n]
-		logger.Printf("data from client : %v", string(data))
-	}
+        parsedData = tools.Parse(data)
+        logger.Printf("data from client : %v", string(data))
 
+	}
+    db.WriteData(parsedData) 
+    defer fmt.Printf("client %s is disconnected...\n", client)
 }
 
 
