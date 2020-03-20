@@ -1,86 +1,95 @@
 package db
 
 import (
-    "fmt"
-    "context"
-    "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
+	"context"
+	"fmt"
 
-    "../bodyStruct"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"../bodyStruct"
 )
 
-var dbMap map[string]string = map[string]string {
-    "test": "testDB",
-    "token": "tokenDB",
+var dbMap map[string]string = map[string]string{
+	"test":  "testDB",
+	"token": "tokenDB",
 }
 
-
+var merr mongo.WriteException
 
 func connectMongo(dbname string, colname string) *mongo.Collection {
-    clientOption := options.Client().ApplyURI("mongodb://localhost:27017")
-    client, err := mongo.Connect(context.TODO(), clientOption)
+	clientOption := options.Client().ApplyURI("mongodb://localhost:27017")
+	client, err := mongo.Connect(context.TODO(), clientOption)
 
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
-    err = client.Ping(context.TODO(), nil)
+	err = client.Ping(context.TODO(), nil)
 
-    database := client.Database(dbname)
-    collection := database.Collection(colname)
+	database := client.Database(dbname)
+	collection := database.Collection(colname)
 
-    return collection
+	return collection
 }
-
 
 func WriteData(data interface{}) {
-    collection := connectMongo(dbMap["test"], "userInfo")
+	collection := connectMongo(dbMap["test"], "userInfo")
 
-    fmt.Println("collection test : ", collection )
-    switch data.(type) {
-        case bodyStruct.Body:
-            fmt.Println(data.(bodyStruct.Body).Token)
-            fmt.Println(data.(bodyStruct.Body).UserID)
-            bsonData := bson.M{
-                "token" : data.(bodyStruct.Body).Token,
-                "userID" : data.(bodyStruct.Body).UserID,
-            }
-            result, err := collection.InsertOne(context.TODO(), bsonData)
+	switch data.(type) {
+	case *bodyStruct.Body:
+		bsonData := bson.M{
+			"token":  data.(*bodyStruct.Body).Token,
+			"userID": data.(*bodyStruct.Body).UserID,
+		}
+		_, err := collection.InsertOne(context.TODO(), bsonData)
 
-            if err != nil {
-                panic(err)
-            }
-
-            fmt.Println("WriteData result : ", result)
-    }
+		if err != nil {
+			merr = err.(mongo.WriteException)
+			fmt.Printf("Number of errors : %d\n", len(merr.WriteErrors))
+			errCode := merr.WriteErrors[0].Code
+			fmt.Println("errCode of MongoDB : ", errCode)
+			if errCode == 11000 {
+				//UserID already is saved
+				fmt.Println("Existed ID")
+				result := ReadData(data.(*bodyStruct.Body).UserID)
+				fmt.Println("Existed data : ", result)
+			}
+		}
+	}
 }
 
+func ReadData(userID string) interface{} {
+	collection := connectMongo(dbMap["test"], "userInfo")
+	var err error
+	var cursor *mongo.Cursor
+	//read all data or specific data with userID
+	if userID == "" {
+		cursor, err = collection.Find(context.TODO(), bson.D{{}})
+	} else {
+		cursor, err = collection.Find(context.TODO(), bson.M{"userID": userID})
+	}
 
-func ReadData() interface{} {
-    collection := connectMongo(dbMap["test"], "userInfo")
-    fmt.Println("collection test : ", collection)
+	if err != nil {
+		panic(err)
+	}
 
-    cursor, err := collection.Find(context.TODO(), bson.D{{}})
-    if err != nil {
-        panic(err)
-    }
+	var resultArray []bson.M
 
-    var resultArray []bson.M
+	for cursor.Next(context.TODO()) {
+		var result bson.M
 
-    for cursor.Next(context.TODO()){
-        var result bson.M
+		err := cursor.Decode(&result)
 
-        err := cursor.Decode(&result)
+		if err != nil {
+			panic(err)
+		} else {
+			resultArray = append(resultArray, result)
+		}
+	}
 
-        if err != nil {
-            panic(err)
-        } else {
-            resultArray = append(resultArray, result)
-        }
-    }
+	defer cursor.Close(context.TODO())
 
-    defer cursor.Close(context.TODO())
-
-    return resultArray
+	return resultArray
 }

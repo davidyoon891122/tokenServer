@@ -7,16 +7,19 @@ import (
     "../bodyStruct"
     "encoding/binary"
     "strconv"
+    "strings"
 )
 
 
 //Global Variables
 var recvData []byte
-var header headerStruct.Header
+var header *headerStruct.Header
 var index int
-var body bodyStruct.Body
+var body *bodyStruct.Body
 
-func Parse(data []byte) bodyStruct.Body {
+func Parse(data []byte) *bodyStruct.Body {
+    header = &headerStruct.Header{}
+    body = &bodyStruct.Body{}
     fmt.Println("Parser is initializing..")
     recvData = data
 
@@ -28,7 +31,7 @@ func Parse(data []byte) bodyStruct.Body {
 
     printHeader()
     //data Processing.
-
+    printBody()
     return body
 }
 
@@ -49,7 +52,6 @@ func parseHeader() {
 }
 
 
-
 func printHeader() {
     fmt.Println("Length : ", header.Length)
     fmt.Println("Process : ", header.Process)
@@ -64,10 +66,13 @@ func printHeader() {
 
 func parseBody() {
     body.Token = readFixLenStr(bodyStruct.TokenSize)
-    body.UserID = readFixLenStr(bodyStruct.UserIDSize)
-
+    body.UserID = readFixLenStr(bodyStruct.UserIDSize) 
 }
 
+func printBody() {
+    fmt.Println("Token : ", body.Token)
+    fmt.Println("UserID : ", body.UserID)
+}
 
 func readInt() int {
     ret := binary.BigEndian.Uint32(recvData[index:])
@@ -93,6 +98,7 @@ func readByte() byte {
 func readFixLenStr(length int) string{
     ret := recvData[index:index+length]
     index += length
+    fmt.Println("test", string(ret))
     return string(ret)
 }
 
@@ -101,3 +107,13 @@ func getService() string {
     service :=  strconv.Itoa(int(header.Process)) + strconv.Itoa(int(header.Service)) 
     return service
 }
+
+
+func trimStr(data string, oldc string, newc string, lenstr int) string {
+   trimData :=  strings.Replace(data, oldc, newc, lenstr)
+   return trimData
+}
+
+
+
+
