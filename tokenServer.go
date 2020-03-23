@@ -78,15 +78,22 @@ func Handler(conn net.Conn) {
 
 		}
 
-		savedData := db.ReadData("")
+		resCode := db.WriteData(parsedData)
+		if resCode == 0 {
+			fmt.Println("UserInfo succesfully saved ")
+			savedData := db.ReadData("")
 
-		//fmt.Println("saved data :", savedData)
+			for k, v := range savedData.([]bson.M) {
+				fmt.Printf("%d. UserID : %s\n", k, v["userID"])
+				fmt.Printf("%d. Token : %s\n", k, v["token"])
+				fmt.Printf("-------------------------------------\n")
+			}
 
-		for k, v := range savedData.([]bson.M) {
-			fmt.Printf("%d. UserID : %s\n", k, v["userID"])
-			fmt.Printf("%d. Token : %s\n", k, v["token"])
-			fmt.Printf("-------------------------------------\n")
+		} else if resCode == 11000 {
+			fmt.Println("Existed ID")
+			result := db.ReadData(parsedData.UserID)
+			fmt.Println("Existed data : ", result)
 		}
-		db.WriteData(parsedData)
+
 	}
 }

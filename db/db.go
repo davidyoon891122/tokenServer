@@ -34,7 +34,7 @@ func connectMongo(dbname string, colname string) *mongo.Collection {
 	return collection
 }
 
-func WriteData(data interface{}) {
+func WriteData(data interface{}) int {
 	collection := connectMongo(dbMap["test"], "userInfo")
 
 	switch data.(type) {
@@ -50,14 +50,10 @@ func WriteData(data interface{}) {
 			fmt.Printf("Number of errors : %d\n", len(merr.WriteErrors))
 			errCode := merr.WriteErrors[0].Code
 			fmt.Println("errCode of MongoDB : ", errCode)
-			if errCode == 11000 {
-				//UserID already is saved
-				fmt.Println("Existed ID")
-				result := ReadData(data.(*bodyStruct.Body).UserID)
-				fmt.Println("Existed data : ", result)
-			}
+			return errCode
 		}
 	}
+	return 0
 }
 
 func ReadData(userID string) interface{} {
