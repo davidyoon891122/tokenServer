@@ -1,0 +1,3 @@
+server:
+      serverIP: "10.131.150.171"
+      serverPort: ":13302"

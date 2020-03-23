@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"./bodyStruct"
+	"./config"
 	"./db"
 	"./tools"
 
@@ -15,13 +16,16 @@ import (
 )
 
 //Global Variables
-var IP string = "10.131.150.171" //docker "172.17.0.2"
-var PORT string = ":13302"
+// var IP string = "10.131.150.171" //docker "172.17.0.2"
+// var PORT string = ":13302"
+var configPath string = "./config.yaml"
 var logger *log.Logger
 var programName string = "server"
 
 func setLogger() {
 	currentDirectory, _ := os.Getwd()
+	createLogDirectory(currentDirectory + "logs")
+
 	logPath := "/logs/" + programName + ".log"
 	f, err := os.OpenFile(currentDirectory+logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
@@ -33,7 +37,8 @@ func setLogger() {
 
 func main() {
 	setLogger()
-	ln, err := net.Listen("tcp", IP+PORT)
+	serverInfo := config.Config(configPath)
+	ln, err := net.Listen("tcp", serverInfo["IP"]+serverInfo["PORT"])
 	defer ln.Close()
 
 	if err != nil {
@@ -107,5 +112,14 @@ func Handler(conn net.Conn) {
 			fmt.Println("update document must contain key beginning with '$'")
 		}
 
+	}
+}
+
+func createLogDirectory(cwd string) {
+	if _, err := os.Stat(cwd); os.IsNotExist(err) {
+		err = os.Mkdir("logs", 0755)
+		if err != nil {
+
+		}
 	}
 }
