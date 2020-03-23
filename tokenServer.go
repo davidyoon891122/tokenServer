@@ -74,7 +74,8 @@ func Handler(conn net.Conn) {
 		if n > 0 {
 			data := recvBuf[:n]
 			parsedData = tools.Parse(data)
-			logger.Printf("data from client : %v", string(data))
+			logger.Printf("before parsing : data from client : %v", string(data))
+			logger.Printf("after parsing : data from client : %v", parsedData)
 
 		}
 
@@ -92,7 +93,18 @@ func Handler(conn net.Conn) {
 		} else if resCode == 11000 {
 			fmt.Println("Existed ID")
 			result := db.ReadData(parsedData.UserID)
-			fmt.Println("Existed data : ", result)
+			fmt.Println("Existed data : ", result.([]bson.M)[0])
+			fmt.Println("Saved UserID : ", result.([]bson.M)[0]["userID"])
+			fmt.Println("Saved Token : ", result.([]bson.M)[0]["token"])
+
+			if result.([]bson.M)[0]["token"] != parsedData.Token {
+				db.UpdateData(parsedData)
+				fmt.Println("Token is updated.")
+			} else if result.([]bson.M)[0]["token"] == parsedData.Token {
+				fmt.Println("No updates")
+			}
+		} else if resCode == 00001 {
+			fmt.Println("update document must contain key beginning with '$'")
 		}
 
 	}

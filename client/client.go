@@ -62,9 +62,7 @@ func packMsg(length int, process int, service int, window int, control int, flag
 	} else if service == 0x0001 {
 		bodyBytes = packInsertBody()
 	} else if service == 0x0002 {
-		bodyBytes = packTestBody()
-	} else if service == 0x0003 {
-		bodyBytes = packTestBody()
+		bodyBytes = packInsertBody()
 	}
 
 	totalBytes = append(headerBytes, bodyBytes...)
@@ -91,7 +89,7 @@ func packInsertBody() []byte {
 
 	token = getToken()
 	fmt.Println("User ID : ")
-	fmt.Scanf("%s", userID)
+	fmt.Scanf("%s", &userID)
 	bodyBuffer.Write([]byte(token))
 	bodyBuffer.Write([]byte(userID))
 
@@ -101,9 +99,7 @@ func packInsertBody() []byte {
 func printMenu() {
 	fmt.Println("1. Duplicated key test.")
 	fmt.Println("2. Insert Test.")
-	fmt.Println("3. Modift Test.")
-	fmt.Println("4. Delete Test.")
-	fmt.Println("5. Exit.")
+	fmt.Println("3. Exit.")
 }
 
 func selectMenu() []byte {
@@ -123,7 +119,7 @@ func selectMenu() []byte {
 	if selector == 1 {
 		length = 152 + 16
 		process = 0x7FF3
-		service = 0x0001
+		service = 0x0000
 		window = 1050
 		control = 0
 		flag = 0
@@ -132,35 +128,19 @@ func selectMenu() []byte {
 	} else if selector == 2 {
 		length = 152 + 16
 		process = 0x7FF3
-		service = 0x0002
+		service = 0x0001
 		window = 1050
 		control = 0
 		flag = 0
 		reserve = 0
 		data = packMsg(length, process, service, window, control, flag, reserve)
 	} else if selector == 3 {
-		length = 152 + 16
-		process = 0x7FF3
-		service = 0x0003
-		window = 1050
-		control = 0
-		flag = 0
-		reserve = 0
-		data = packMsg(length, process, service, window, control, flag, reserve)
-	} else if selector == 4 {
-		length = 152 + 16
-		process = 0x7FF3
-		service = 0x0004
-		window = 1050
-		control = 0
-		flag = 0
-		reserve = 0
-		data = packMsg(length, process, service, window, control, flag, reserve)
-	} else if selector == 5 {
 		os.Exit(1)
 	} else {
 		data = nil
 	}
+
+	fmt.Println("data to send :", data)
 	return data
 }
 

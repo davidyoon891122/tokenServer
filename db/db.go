@@ -16,6 +16,11 @@ var dbMap map[string]string = map[string]string{
 	"token": "tokenDB",
 }
 
+var dbErrorCodeMap map[string]int = map[string]int{
+	"Duplicated key":                      11000,
+	"'$'is missing in the update process": 00001,
+}
+
 var merr mongo.WriteException
 
 func connectMongo(dbname string, colname string) *mongo.Collection {
@@ -88,4 +93,28 @@ func ReadData(userID string) interface{} {
 	defer cursor.Close(context.TODO())
 
 	return resultArray
+}
+
+func UpdateData(data interface{}) int {
+	collection := connectMongo(dbMap["test"], "userInfo")
+
+	switch data.(type) {
+	case *bodyStruct.Body:
+		bsonData := bson.M{
+			"$set": bson.M{
+				"token":  data.(*bodyStruct.Body).Token,
+				"userID": data.(*bodyStruct.Body).UserID,
+			},
+		}
+
+		filter := bson.M{"userID": data.(*bodyStruct.Body).UserID}
+		result, err := collection.UpdateOne(context.TODO(), filter, bsonData)
+
+		fmt.Println("result update : ", result)
+		if err != nil {
+			fmt.Println(err)
+			return 00001
+		}
+	}
+	return 0
 }
