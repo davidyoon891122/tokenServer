@@ -10,7 +10,7 @@ type Header struct {
     Window int
     Control byte
     Flag byte
-    Reserve int
+    Reserve int16
 }
 
 
