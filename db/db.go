@@ -24,7 +24,7 @@ var dbErrorCodeMap map[string]int = map[string]int{
 var merr mongo.WriteException
 
 func connectMongo(dbname string, colname string) *mongo.Collection {
-	clientOption := options.Client().ApplyURI("mongodb://localhost:27017")
+	clientOption := options.Client().ApplyURI("mongodb://localhost:32774/?connect=direct") //?replicaSet=rs0 is not working.
 	client, err := mongo.Connect(context.TODO(), clientOption)
 
 	if err != nil {
@@ -32,6 +32,9 @@ func connectMongo(dbname string, colname string) *mongo.Collection {
 	}
 
 	err = client.Ping(context.TODO(), nil)
+	if err != nil {
+		panic(err)
+	}
 
 	database := client.Database(dbname)
 	collection := database.Collection(colname)
